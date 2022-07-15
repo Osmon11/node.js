@@ -1,12 +1,17 @@
 import "module-alias/register";
+
 import { setup } from "./utils";
 setup();
-import express from "express";
+
+import ip from "ip";
 import cors from "cors";
-import bodyParser from "body-parser";
 import morgan from "morgan";
+import express from "express";
+import minimist from "minimist";
+import bodyParser from "body-parser";
 
 import _settings from "./routes/_settings";
+import { slidesRouter, imageRouter } from "./routes";
 
 const app = express();
 const port = process.env.PORT;
@@ -18,8 +23,8 @@ app.use(morgan("tiny"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-import { slidesRouter } from "./routes";
 app.use("/slides", slidesRouter);
+app.use("/image", imageRouter);
 
 app.get("/", (_req, res, next) => {
   try {
@@ -65,9 +70,6 @@ app.get("/line-debug", function (_req, res) {
 });
 
 let ipAddress = "localhost";
-
-import ip from "ip";
-import minimist from "minimist";
 
 const args = minimist(process.argv.slice(2));
 if (args["shared"]) {

@@ -1,11 +1,11 @@
-import { model, Schema, Types } from "mongoose";
+import { model, Schema } from "mongoose";
 
-export const SlideSchema = new Schema({
-  id: Types.ObjectId,
+export const slideschema = new Schema({
+  id: String,
   imageName: String,
   imageUrl: String,
   title: String,
   subtitle: String,
 });
 
-export const SlidesModel = model("slide", SlideSchema);
+export const SlidesModel = model("slide", slideschema);
