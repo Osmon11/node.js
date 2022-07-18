@@ -1,8 +1,11 @@
+import { validationResult } from "express-validator";
 import fs from "fs";
 import path from "path";
 import { promisify } from "util";
 import { v4 as uuidv4 } from "uuid";
 import { SlidesModel, ImageModel } from "../models";
+
+const imageUrlSplitter = "?imageId=";
 
 export const getSlides = async (req, res) => {
   try {
@@ -20,7 +23,12 @@ export const getSlides = async (req, res) => {
 
 export const deleteSlide = async (req, res) => {
   try {
-    await SlidesModel.deleteOne({ id: req.query.id });
+    let slide = await SlidesModel.findOne({ id: req.query.id });
+    await ImageModel.deleteOne({
+      id: slide.imageUrl.split(imageUrlSplitter)[1],
+    });
+    await SlidesModel.deleteOne({ id: slide.id });
+
     let slides = await SlidesModel.find();
     res.send(slides);
   } catch (err) {
@@ -29,59 +37,71 @@ export const deleteSlide = async (req, res) => {
 };
 
 export const setSlide = async (req, res) => {
-  const url = req.protocol + "://" + req.get("host");
-  const file = req.file;
-  try {
-    let data = await fs.readFileSync(file.path);
+  const errors = validationResult(req);
 
-    if (data.length) {
-      await new ImageModel({
-        id: file.filename,
-        type: file.mimetype,
-        data,
-      }).save();
-      const newSlide = {
-        id: uuidv4(),
-        imageName: file.originalname,
-        imageUrl: `${url}/image?imageId=${file.filename}`,
-        title: req.body.title,
-        subtitle: req.body.subtitle,
-      };
-      await new SlidesModel(newSlide).save();
-      let slides = await SlidesModel.find();
-      res.send(slides);
-    } else {
-      res.status(400).json({ error: "Не удалось прочитать файл" });
+  if (errors.isEmpty()) {
+    const url = `${req.protocol}://${req.get("host")}`;
+    const file = req.file;
+    try {
+      let data = fs.readFileSync(file.path);
+
+      if (data.length) {
+        await new ImageModel({
+          id: file.filename,
+          type: file.mimetype,
+          data,
+        }).save();
+        const newSlide = {
+          id: uuidv4(),
+          imageName: file.originalname,
+          imageUrl: `${url}/image${imageUrlSplitter}${file.filename}`,
+          title: req.body.title,
+          subtitle: req.body.subtitle,
+        };
+        await new SlidesModel(newSlide).save();
+        let slides = await SlidesModel.find();
+        res.send(slides);
+      } else {
+        res.status(400).json({ error: "Не удалось прочитать image" });
+      }
+    } catch (err) {
+      res.status(400).send(err);
+    } finally {
+      const unlinkAsync = promisify(fs.unlink);
+      await unlinkAsync(file.path);
     }
-  } catch (err) {
-    res.status(400).send(err);
-  } finally {
-    const unlinkAsync = promisify(fs.unlink);
-    await unlinkAsync(file.path);
+  } else {
+    res.status(400).json(errors.array());
   }
 };
 
 export const updateSlide = async (req, res) => {
-  const url = req.protocol + "://" + req.get("host");
-  const file = req.file;
+  const errors = validationResult(req);
 
-  let data = "",
-    updateData = { title: req.body.title, subtitle: req.body.subtitle };
-  if (file) {
-    data = await fs.readFileSync(file.path);
-  }
-  if (data.length) {
-    await ImageModel.replaceOne(
-      { id: req.body.imageUrl.split("?imageId=")[1] },
-      {
-        type: file.mimetype,
-        data,
-      }
-    );
-    updateData.imageName = file.originalname;
-  }
+  if (errors.isEmpty()) {
+    const url = req.protocol + "://" + req.get("host");
+    const file = req.file;
 
-  await SlidesModel.updateOne({ id: req.query.id }, updateData);
-  let slides = await SlidesModel.find();
-  res.send(slides);
+    let data = "",
+      updateData = { title: req.body.title, subtitle: req.body.subtitle };
+    if (file) {
+      data = fs.readFileSync(file.path);
+    }
+    if (data.length) {
+      await ImageModel.updateOne(
+        { id: req.body.imageUrl.split(imageUrlSplitter)[1] },
+        {
+          type: file.mimetype,
+          data,
+        }
+      );
+      updateData.imageName = file.originalname;
+    }
+
+    await SlidesModel.updateOne({ id: req.query.id }, updateData);
+    let slides = await SlidesModel.find();
+    res.send(slides);
+  } else {
+    res.status(400).json(errors.array());
+  }
 };

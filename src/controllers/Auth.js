@@ -16,6 +16,8 @@ export const registrationUser = async (req, res) => {
       password: passwordHash,
     });
     newUser.save();
+  } else {
+    res.status(400).json(errors.array());
   }
 };
 
@@ -26,6 +28,6 @@ export const authUser = (req, res) => {
     newAuth.token = jwt.sign(newAuth, "admin_amanat_advisory");
     res.json(newAuth);
   } else {
-    res.status(400).json(errors.array());
+    res.status(400).send("Не правильный логин или пароль ");
   }
 };

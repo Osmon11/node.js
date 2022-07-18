@@ -6,12 +6,13 @@ import {
   updateSlide,
 } from "../controllers/Slides";
 import { upload } from "../utils";
+import { setValidation, updateValidation } from "../validator/slide";
 
 const slidesRouter = express.Router();
 
 slidesRouter.get("/", getSlides);
 slidesRouter.delete("/", deleteSlide);
-slidesRouter.post("/", upload.single("image"), setSlide);
-slidesRouter.put("/", upload.single("image"), updateSlide);
+slidesRouter.post("/", upload.single("image"), setValidation, setSlide);
+slidesRouter.put("/", upload.single("image"), updateValidation, updateSlide);
 
 export { slidesRouter };

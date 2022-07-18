@@ -10,7 +10,13 @@ import express from "express";
 import minimist from "minimist";
 import bodyParser from "body-parser";
 
-import { _settings, slidesRouter, imageRouter, authRouter } from "./routes";
+import {
+  _settings,
+  slidesRouter,
+  imageRouter,
+  authRouter,
+  newsFeedRouter,
+} from "./routes";
 
 const app = express();
 const port = process.env.PORT;
@@ -26,6 +32,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use("/auth", authRouter);
 app.use("/slides", slidesRouter);
 app.use("/image", imageRouter);
+app.use("/news-feed", newsFeedRouter);
 
 app.get("/", (_req, res, next) => {
   try {
