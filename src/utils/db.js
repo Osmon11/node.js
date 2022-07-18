@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import colors from "colors/safe";
 
 let retryCount = 0;
-const MAX_RETRIES = 10;
+const MAX_RETRIES = 2;
 export const connect = async function () {
   try {
     await mongoose

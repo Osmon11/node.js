@@ -10,8 +10,7 @@ import express from "express";
 import minimist from "minimist";
 import bodyParser from "body-parser";
 
-import _settings from "./routes/_settings";
-import { slidesRouter, imageRouter } from "./routes";
+import { _settings, slidesRouter, imageRouter, authRouter } from "./routes";
 
 const app = express();
 const port = process.env.PORT;
@@ -23,6 +22,8 @@ app.use(morgan("tiny"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
+// Routes
+app.use("/auth", authRouter);
 app.use("/slides", slidesRouter);
 app.use("/image", imageRouter);
 
@@ -34,7 +35,7 @@ app.get("/", (_req, res, next) => {
   }
 });
 
-app.use("/_settings", _settings);
+// app.use("/_settings", _settings);
 app.use((error, _req, res, next) => {
   if (error) {
     morgan(":method :url :status :res[content-length] - :response-time ms");
