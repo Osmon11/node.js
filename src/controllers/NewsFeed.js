@@ -11,7 +11,7 @@ export const getNewsFeed = async (req, res) => {
   try {
     let newsFeed = [];
     if (Boolean(req.query.id)) {
-      newsFeed = await NewsModel.find({ id: req.query.id }).exec();
+      newsFeed = await NewsModel.find({ _id: req.query.id }).exec();
     } else {
       newsFeed = await NewsModel.find();
     }
@@ -23,11 +23,11 @@ export const getNewsFeed = async (req, res) => {
 
 export const deleteNewsFeed = async (req, res) => {
   try {
-    let news = await NewsModel.findOne({ id: req.query.id });
+    let news = await NewsModel.findOne({ _id: req.query.id });
     await ImageModel.deleteOne({
       id: news.imageUrl.split(imageUrlSplitter)[1],
     });
-    await NewsModel.deleteOne({ id: news.id });
+    await NewsModel.deleteOne({ _id: news.id });
 
     let newsFeed = await NewsModel.find();
     res.send(newsFeed);
@@ -44,7 +44,11 @@ export const setNewsFeed = async (req, res) => {
     try {
       let data = fs.readFileSync(file.path);
       if (data.length) {
-        await new ImageModel({ type: file.mimetype, data }).save();
+        await new ImageModel({
+          id: file.filename,
+          type: file.mimetype,
+          data,
+        }).save();
         await new NewsModel({
           title: req.body.title,
           subtitle: req.body.subtitle,
@@ -52,14 +56,12 @@ export const setNewsFeed = async (req, res) => {
           imageName: file.originalname,
           imageUrl: `${url}/image${imageUrlSplitter}${file.filename}`,
         }).save();
-        let newsFeed = await NewsModel.find().exec();
+        let newsFeed = await NewsModel.find();
         res.send(newsFeed);
       } else {
-        console.log(true);
         res.status(400).json({ error: "Не удалось прочитать image" });
       }
     } catch (error) {
-      console.log(error);
       res.status(400).send(error);
     }
   } else {
@@ -92,10 +94,13 @@ export const updateNewsFeed = async (req, res) => {
         );
         updateData.imageName = file.originalname;
       }
-      await NewsModel.updateOne({ id: req.query.id }, updateData);
-      let newsFeed = NewsModel.find();
+      await NewsModel.updateOne({ _id: req.query.id }, updateData);
+      let newsFeed = await NewsModel.find();
       res.send(newsFeed);
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+      res.status(400).send(error);
+    }
   } else {
     res.status(400).json(errors.array());
   }

@@ -1,7 +1,6 @@
 import { model, Schema } from "mongoose";
 
 export const NewsSchema = new Schema({
-  id: String,
   title: String,
   subtitle: String,
   imageName: String,

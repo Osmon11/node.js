@@ -9,6 +9,7 @@ export const getImage = async (req, res) => {
     });
     res.end(image.data);
   } else {
+    await ImageModel.deleteMany({ id: null });
     res.status(404).send("Запрос не верный");
   }
 };

@@ -11,7 +11,7 @@ export const getSlides = async (req, res) => {
   try {
     let slides = [];
     if (Boolean(req.query.id)) {
-      slides = await SlidesModel.find({ id: req.query.id }).exec();
+      slides = await SlidesModel.find({ _id: req.query.id }).exec();
     } else {
       slides = await SlidesModel.find();
     }
@@ -23,11 +23,11 @@ export const getSlides = async (req, res) => {
 
 export const deleteSlide = async (req, res) => {
   try {
-    let slide = await SlidesModel.findOne({ id: req.query.id });
+    let slide = await SlidesModel.findOne({ _id: req.query.id });
     await ImageModel.deleteOne({
       id: slide.imageUrl.split(imageUrlSplitter)[1],
     });
-    await SlidesModel.deleteOne({ id: slide.id });
+    await SlidesModel.deleteOne({ _id: slide.id });
 
     let slides = await SlidesModel.find();
     res.send(slides);
@@ -51,14 +51,12 @@ export const setSlide = async (req, res) => {
           type: file.mimetype,
           data,
         }).save();
-        const newSlide = {
-          id: uuidv4(),
+        await new SlidesModel({
           imageName: file.originalname,
           imageUrl: `${url}/image${imageUrlSplitter}${file.filename}`,
           title: req.body.title,
           subtitle: req.body.subtitle,
-        };
-        await new SlidesModel(newSlide).save();
+        }).save();
         let slides = await SlidesModel.find();
         res.send(slides);
       } else {
@@ -98,7 +96,7 @@ export const updateSlide = async (req, res) => {
       updateData.imageName = file.originalname;
     }
 
-    await SlidesModel.updateOne({ id: req.query.id }, updateData);
+    await SlidesModel.updateOne({ _id: req.query.id }, updateData);
     let slides = await SlidesModel.find();
     res.send(slides);
   } else {
